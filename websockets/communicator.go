@@ -6,7 +6,6 @@ import (
 
 type Communicator struct {
 	conn *websocket.Conn
-	Name string
 }
 
 // Constructor
@@ -19,7 +18,7 @@ func NewCommunicator(conn *websocket.Conn) (communicator *Communicator) {
 
 // Reader function
 func (this *Communicator) Reader(c_recv chan string) {
-	log.Debug("Read communicator %s started\n", this.Name)
+	log.Debug("Read communicator started")
 
 	for {
 		_, msg, err := this.conn.ReadMessage()
@@ -34,7 +33,7 @@ func (this *Communicator) Reader(c_recv chan string) {
 
 // Writer
 func (this *Communicator) Writer(c_send chan string) {
-	log.Debug("Write communicator %s started\n", this.Name)
+	log.Debug("Write communicator started")
 	send_msg := ""
 
 	for {

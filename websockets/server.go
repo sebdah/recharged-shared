@@ -42,7 +42,6 @@ func (this *Server) Handler(w http.ResponseWriter, r *http.Request) {
 
 	// Instanciate a new communicator
 	communicator := NewCommunicator(conn)
-	communicator.Name = "Server"
 	log.Debug("Starting websockets communication channel")
 	go communicator.Reader(this.ReadMessage)
 	go communicator.Writer(this.WriteMessage)

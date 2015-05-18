@@ -59,7 +59,6 @@ func (this *Client) connect() {
 
 	// Instanciate a new communicator
 	communicator := NewCommunicator(conn)
-	communicator.Name = "Client"
 	log.Debug("Starting websockets communication channel")
 	go communicator.Reader(this.ReadMessage)
 	go communicator.Writer(this.WriteMessage)
