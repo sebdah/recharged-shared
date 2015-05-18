@@ -1,7 +1,6 @@
 package websockets
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -37,14 +36,14 @@ func NewServer() (server *Server) {
 func (this *Server) Handler(w http.ResponseWriter, r *http.Request) {
 	conn, err := this.Upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Printf("Error upgrading websocket connection: %s\n", err)
+		log.Error("Error upgrading websocket connection: %s\n", err)
 		return
 	}
 
 	// Instanciate a new communicator
 	communicator := NewCommunicator(conn)
 	communicator.Name = "Server"
-	log.Println("Starting websockets communication channel")
+	log.Debug("Starting websockets communication channel")
 	go communicator.Reader(this.ReadMessage)
 	go communicator.Writer(this.WriteMessage)
 }

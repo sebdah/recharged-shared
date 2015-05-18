@@ -2,7 +2,6 @@ package websockets
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -56,12 +55,12 @@ func (this *Client) connect() {
 		panic(err)
 	}
 
-	log.Printf("Connected to endpoint '%s' via websockets\n", this.Endpoint)
+	log.Info("Connected to endpoint '%s' via websockets\n", this.Endpoint)
 
 	// Instanciate a new communicator
 	communicator := NewCommunicator(conn)
 	communicator.Name = "Client"
-	log.Println("Starting websockets communication channel")
+	log.Debug("Starting websockets communication channel")
 	go communicator.Reader(this.ReadMessage)
 	go communicator.Writer(this.WriteMessage)
 

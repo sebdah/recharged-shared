@@ -1,8 +1,6 @@
 package websockets
 
 import (
-	"log"
-
 	"github.com/gorilla/websocket"
 )
 
@@ -21,7 +19,7 @@ func NewCommunicator(conn *websocket.Conn) (communicator *Communicator) {
 
 // Reader function
 func (this *Communicator) Reader(c_recv chan string) {
-	log.Printf("Read communicator %s started\n", this.Name)
+	log.Debug("Read communicator %s started\n", this.Name)
 
 	for {
 		_, msg, err := this.conn.ReadMessage()
@@ -36,7 +34,7 @@ func (this *Communicator) Reader(c_recv chan string) {
 
 // Writer
 func (this *Communicator) Writer(c_send chan string) {
-	log.Printf("Write communicator %s started\n", this.Name)
+	log.Debug("Write communicator %s started\n", this.Name)
 	send_msg := ""
 
 	for {
