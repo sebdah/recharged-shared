@@ -2,7 +2,6 @@ package messages
 
 import (
 	"encoding/json"
-	"log"
 	"strings"
 
 	"github.com/sebdah/recharged-shared/rpc"
@@ -19,15 +18,15 @@ type AuthorizeConf struct {
 	// PriceScheme, Not yet implemented
 }
 
-func NewAuthorizeReq(payload string) (req *AuthorizeReq, err error) {
+func NewAuthorizeReq(payload string) (req *AuthorizeReq, rpcError rpc.Errorer) {
 	req = new(AuthorizeReq)
 	req.messageType = "Authorize"
 
 	decoder := json.NewDecoder(strings.NewReader(payload))
-	err = decoder.Decode(&req)
+	err := decoder.Decode(&req)
 	if err != nil {
-		log.Printf("Unable to parse payload: %s", err.Error())
-		err = rpc.NewFormationViolation()
+		log.Notice("Unable to parse payload: %s", err.Error())
+		rpcError = rpc.NewFormationViolation()
 		return
 	}
 
