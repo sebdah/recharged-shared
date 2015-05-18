@@ -23,6 +23,7 @@ func (this *Communicator) Reader(c_recv chan string) {
 	for {
 		_, msg, err := this.conn.ReadMessage()
 		if err != nil {
+			log.Error("%s", err.Error())
 			return
 		}
 
