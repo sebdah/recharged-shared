@@ -1,10 +1,10 @@
 package types
 
 type IdTagInfo struct {
-	ExpiryDate string   `type:"string" required="false"`
-	GroupTagId *IdToken `type:"idToken" required="false"`
-	Status     string   `type:"string" required:"true"`
-	Language   string   `type="LanguageCode" required="false"`
+	ExpiryDate string   `json:"expiryDate" type:"string" required="false"`
+	GroupTagId *IdToken `json:"groupTagId" type:"idToken" required="false"`
+	Status     string   `json:"status" type:"string" required:"true"`
+	Language   string   `json:"language" type="LanguageCode" required="false"`
 }
 
 // Constructor
