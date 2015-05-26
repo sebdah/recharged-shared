@@ -36,8 +36,9 @@ func NewDataTransferReq(payload string) (req *DataTransferReq, rpcError rpc.Erro
 }
 
 // Constructor
-func NewDataTransferConf() (conf *DataTransferConf) {
+func NewDataTransferConf(status string) (conf *DataTransferConf) {
 	conf = new(DataTransferConf)
+	conf.Status = status
 	return
 }
 
