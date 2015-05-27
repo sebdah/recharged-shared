@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -55,6 +56,12 @@ func (this *Client) connect() {
 		panic(err)
 	}
 
+	conn.SetReadLimit(maxMessageSize)
+	conn.SetReadDeadline(time.Now().Add(pongWait))
+
+	log.Debug("Sending ping")
+	conn.WriteMessage(websocket.PingMessage, []byte{})
+
 	log.Info("Connected to endpoint '%s' via websockets\n", this.Endpoint)
 
 	// Instanciate a new communicator
@@ -62,5 +69,4 @@ func (this *Client) connect() {
 	log.Debug("Starting websockets communication channel")
 	go communicator.Reader(this.ReadMessage)
 	go communicator.Writer(this.WriteMessage)
-
 }

@@ -7,11 +7,14 @@ import (
 )
 
 type Server struct {
+	Conn            *websocket.Conn
 	Upgrader        websocket.Upgrader
 	ReadBufferSize  int
 	WriteBufferSize int
 	WriteMessage    chan string
 	ReadMessage     chan string
+	PingHandler     func(string) error
+	PongHandler     func(string) error
 }
 
 func NewServer() (server *Server) {
@@ -29,6 +32,17 @@ func NewServer() (server *Server) {
 	server.ReadMessage = make(chan string)
 	server.WriteMessage = make(chan string)
 
+	// Setup default ping and pong handlers
+	server.PingHandler = func(m string) (err error) {
+		log.Debug("Received ping: %s", m)
+		server.Conn.WriteMessage(websocket.PongMessage, []byte{})
+		return
+	}
+	server.PongHandler = func(m string) (err error) {
+		log.Debug("Received pong: %s", m)
+		return
+	}
+
 	return
 }
 
@@ -39,6 +53,11 @@ func (this *Server) Handler(w http.ResponseWriter, r *http.Request) {
 		log.Error("Error upgrading websocket connection: %s\n", err)
 		return
 	}
+	this.Conn = conn
+
+	// Set the ping and pong handlers
+	conn.SetPingHandler(this.PingHandler)
+	conn.SetPongHandler(this.PongHandler)
 
 	// Instanciate a new communicator
 	communicator := NewCommunicator(conn)
