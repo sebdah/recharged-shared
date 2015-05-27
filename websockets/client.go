@@ -11,12 +11,15 @@ import (
 )
 
 type Client struct {
+	Conn            *websocket.Conn
 	Endpoint        *url.URL
 	Headers         http.Header
 	ReadBufferSize  int
 	WriteBufferSize int
 	WriteMessage    chan string
 	ReadMessage     chan string
+	PingHandler     func(string) error
+	PongHandler     func(string) error
 }
 
 // Constructor
@@ -33,6 +36,17 @@ func NewClient(endpoint *url.URL) (client *Client) {
 	// Create channels
 	client.ReadMessage = make(chan string)
 	client.WriteMessage = make(chan string)
+
+	// Setup default ping and pong handlers
+	client.PingHandler = func(m string) (err error) {
+		log.Debug("Received ping: %s", m)
+		client.Conn.WriteMessage(websocket.PongMessage, []byte{})
+		return
+	}
+	client.PongHandler = func(m string) (err error) {
+		log.Debug("Received pong: %s", m)
+		return
+	}
 
 	client.connect()
 
@@ -55,12 +69,15 @@ func (this *Client) connect() {
 	if err != nil {
 		panic(err)
 	}
+	this.Conn = conn
 
+	// Set some limits
 	conn.SetReadLimit(maxMessageSize)
 	conn.SetReadDeadline(time.Now().Add(pongWait))
 
-	log.Debug("Sending ping")
-	conn.WriteMessage(websocket.PingMessage, []byte{})
+	// Set the ping and pong handlers
+	conn.SetPingHandler(this.PingHandler)
+	conn.SetPongHandler(this.PongHandler)
 
 	log.Info("Connected to endpoint '%s' via websockets\n", this.Endpoint)
 
