@@ -18,8 +18,7 @@ type Client struct {
 	WriteBufferSize int
 	WriteMessage    chan string
 	ReadMessage     chan string
-	PingHandler     func(string) error
-	PongHandler     func(string) error
+	PingMessage     chan string
 }
 
 // Constructor
@@ -36,17 +35,7 @@ func NewClient(endpoint *url.URL) (client *Client) {
 	// Create channels
 	client.ReadMessage = make(chan string)
 	client.WriteMessage = make(chan string)
-
-	// Setup default ping and pong handlers
-	client.PingHandler = func(m string) (err error) {
-		log.Debug("Received ping: %s", m)
-		client.Conn.WriteMessage(websocket.PongMessage, []byte{})
-		return
-	}
-	client.PongHandler = func(m string) (err error) {
-		log.Debug("Received pong: %s", m)
-		return
-	}
+	client.PingMessage = make(chan string)
 
 	client.connect()
 
@@ -60,7 +49,7 @@ func (this *Client) connect() {
 		panic(err)
 	}
 
-	conn, _, err := websocket.NewClient(
+	this.Conn, _, err = websocket.NewClient(
 		rawConn,
 		this.Endpoint,
 		this.Headers,
@@ -69,21 +58,28 @@ func (this *Client) connect() {
 	if err != nil {
 		panic(err)
 	}
-	this.Conn = conn
 
 	// Set some limits
-	conn.SetReadLimit(maxMessageSize)
-	conn.SetReadDeadline(time.Now().Add(pongWait))
-
-	// Set the ping and pong handlers
-	conn.SetPingHandler(this.PingHandler)
-	conn.SetPongHandler(this.PongHandler)
+	this.Conn.SetReadLimit(maxMessageSize)
+	this.Conn.SetReadDeadline(time.Now().Add(pongWait))
 
 	log.Info("Connected to endpoint '%s' via websockets\n", this.Endpoint)
 
 	// Instanciate a new communicator
-	communicator := NewCommunicator(conn)
+	communicator := NewCommunicator(this.Conn)
 	log.Debug("Starting websockets communication channel")
 	go communicator.Reader(this.ReadMessage)
-	go communicator.Writer(this.WriteMessage)
+	go communicator.Writer(this.WriteMessage, this.PingMessage)
+}
+
+// Set ping handler
+func (this *Client) SetPingHandler(h func(string) error) {
+	log.Debug("Setting new ping handler")
+	this.Conn.SetPingHandler(h)
+}
+
+// Set pong handler
+func (this *Client) SetPongHandler(h func(string) error) {
+	log.Debug("Setting new pong handler")
+	this.Conn.SetPongHandler(h)
 }

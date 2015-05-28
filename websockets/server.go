@@ -13,6 +13,7 @@ type Server struct {
 	WriteBufferSize int
 	WriteMessage    chan string
 	ReadMessage     chan string
+	PingMessage     chan string
 	PingHandler     func(string) error
 	PongHandler     func(string) error
 }
@@ -31,15 +32,16 @@ func NewServer() (server *Server) {
 	// Create channels
 	server.ReadMessage = make(chan string)
 	server.WriteMessage = make(chan string)
+	server.PingMessage = make(chan string)
 
 	// Setup default ping and pong handlers
 	server.PingHandler = func(m string) (err error) {
-		log.Debug("Received ping: %s", m)
+		log.Debug("Received ping")
 		server.Conn.WriteMessage(websocket.PongMessage, []byte{})
 		return
 	}
 	server.PongHandler = func(m string) (err error) {
-		log.Debug("Received pong: %s", m)
+		log.Debug("Received pong")
 		return
 	}
 
@@ -63,5 +65,5 @@ func (this *Server) Handler(w http.ResponseWriter, r *http.Request) {
 	communicator := NewCommunicator(conn)
 	log.Debug("Starting websockets communication channel")
 	go communicator.Reader(this.ReadMessage)
-	go communicator.Writer(this.WriteMessage)
+	go communicator.Writer(this.WriteMessage, this.PingMessage)
 }

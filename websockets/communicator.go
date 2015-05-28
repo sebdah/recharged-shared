@@ -31,21 +31,22 @@ func (this *Communicator) Reader(c_recv chan string) {
 }
 
 // Writer
-func (this *Communicator) Writer(c_send chan string) {
+func (this *Communicator) Writer(c_send chan string, c_ping chan string) {
 	log.Debug("Write communicator started")
 
 	for {
-		message, ok := <-c_send
-		if !ok {
-			this.conn.WriteMessage(websocket.CloseMessage, []byte{})
-		} else {
-			this.conn.WriteMessage(websocket.TextMessage, []byte(message))
+		select {
+		case message, ok := <-c_send:
+			if !ok {
+				log.Debug("Sending close message")
+				this.conn.WriteMessage(websocket.CloseMessage, []byte{})
+			} else {
+				log.Debug("Sending text message")
+				this.conn.WriteMessage(websocket.TextMessage, []byte(message))
+			}
+		case _ = <-c_ping:
+			log.Debug("Sending ping message")
+			this.conn.WriteMessage(websocket.PingMessage, []byte{})
 		}
-
-		// Read the c_send channel
-		//send_msg = <-c_send
-		//if send_msg != "" {
-		//this.conn.WriteMessage(websocket.TextMessage, []byte(send_msg))
-		//}
 	}
 }
