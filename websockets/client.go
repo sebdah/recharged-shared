@@ -18,7 +18,7 @@ type Client struct {
 	WriteBufferSize int
 	WriteMessage    chan string
 	ReadMessage     chan string
-	PingMessage     chan string
+	PingChannel     chan string
 }
 
 // Constructor
@@ -35,7 +35,7 @@ func NewClient(endpoint *url.URL) (client *Client) {
 	// Create channels
 	client.ReadMessage = make(chan string)
 	client.WriteMessage = make(chan string)
-	client.PingMessage = make(chan string)
+	client.PingChannel = make(chan string)
 
 	client.connect()
 
@@ -63,23 +63,23 @@ func (this *Client) connect() {
 	this.Conn.SetReadLimit(maxMessageSize)
 	this.Conn.SetReadDeadline(time.Now().Add(pongWait))
 
+	// Register pong handler
+	this.Conn.SetPongHandler(func(message string) error {
+		log.Debug("Received pong message")
+		return nil
+	})
+
 	log.Info("Connected to endpoint '%s' via websockets\n", this.Endpoint)
 
 	// Instanciate a new communicator
 	communicator := NewCommunicator(this.Conn)
 	log.Debug("Starting websockets communication channel")
+	go communicator.Pinger(this.PingChannel)
 	go communicator.Reader(this.ReadMessage)
-	go communicator.Writer(this.WriteMessage, this.PingMessage)
+	go communicator.Writer(this.WriteMessage)
 }
 
-// Set ping handler
-func (this *Client) SetPingHandler(h func(string) error) {
-	log.Debug("Setting new ping handler")
-	this.Conn.SetPingHandler(h)
-}
-
-// Set pong handler
-func (this *Client) SetPongHandler(h func(string) error) {
-	log.Debug("Setting new pong handler")
-	this.Conn.SetPongHandler(h)
+// Send ping message
+func (this *Client) SendPing(message string) {
+	this.PingChannel <- message
 }

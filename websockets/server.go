@@ -13,9 +13,6 @@ type Server struct {
 	WriteBufferSize int
 	WriteMessage    chan string
 	ReadMessage     chan string
-	PingMessage     chan string
-	PingHandler     func(string) error
-	PongHandler     func(string) error
 }
 
 func NewServer() (server *Server) {
@@ -32,38 +29,29 @@ func NewServer() (server *Server) {
 	// Create channels
 	server.ReadMessage = make(chan string)
 	server.WriteMessage = make(chan string)
-	server.PingMessage = make(chan string)
-
-	// Setup default ping and pong handlers
-	server.PingHandler = func(m string) (err error) {
-		log.Debug("Received ping")
-		server.Conn.WriteMessage(websocket.PongMessage, []byte{})
-		return
-	}
-	server.PongHandler = func(m string) (err error) {
-		log.Debug("Received pong")
-		return
-	}
 
 	return
 }
 
 // Handler registering connections
 func (this *Server) Handler(w http.ResponseWriter, r *http.Request) {
-	conn, err := this.Upgrader.Upgrade(w, r, nil)
+	var err error
+	this.Conn, err = this.Upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Error("Error upgrading websocket connection: %s\n", err)
 		return
 	}
-	this.Conn = conn
 
-	// Set the ping and pong handlers
-	conn.SetPingHandler(this.PingHandler)
-	conn.SetPongHandler(this.PongHandler)
+	// Register ping handler
+	this.Conn.SetPingHandler(func(message string) error {
+		log.Debug("Received ping message")
+		this.Conn.WriteMessage(websocket.PongMessage, []byte(message))
+		return nil
+	})
 
 	// Instanciate a new communicator
-	communicator := NewCommunicator(conn)
+	communicator := NewCommunicator(this.Conn)
 	log.Debug("Starting websockets communication channel")
 	go communicator.Reader(this.ReadMessage)
-	go communicator.Writer(this.WriteMessage, this.PingMessage)
+	go communicator.Writer(this.WriteMessage)
 }
