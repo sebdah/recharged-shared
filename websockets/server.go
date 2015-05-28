@@ -11,8 +11,8 @@ type Server struct {
 	Upgrader        websocket.Upgrader
 	ReadBufferSize  int
 	WriteBufferSize int
-	WriteMessage    chan string
-	ReadMessage     chan string
+	WriteChannel    chan string
+	ReadChannel     chan string
 }
 
 func NewServer() (server *Server) {
@@ -27,8 +27,8 @@ func NewServer() (server *Server) {
 	}
 
 	// Create channels
-	server.ReadMessage = make(chan string)
-	server.WriteMessage = make(chan string)
+	server.ReadChannel = make(chan string)
+	server.WriteChannel = make(chan string)
 
 	return
 }
@@ -52,6 +52,6 @@ func (this *Server) Handler(w http.ResponseWriter, r *http.Request) {
 	// Instanciate a new communicator
 	communicator := NewCommunicator(this.Conn)
 	log.Debug("Starting websockets communication channel")
-	go communicator.Reader(this.ReadMessage)
-	go communicator.Writer(this.WriteMessage)
+	go communicator.Reader(this.ReadChannel)
+	go communicator.Writer(this.WriteChannel)
 }

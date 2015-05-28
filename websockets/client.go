@@ -16,8 +16,8 @@ type Client struct {
 	Headers         http.Header
 	ReadBufferSize  int
 	WriteBufferSize int
-	WriteMessage    chan string
-	ReadMessage     chan string
+	WriteChannel    chan string
+	ReadChannel     chan string
 	PingChannel     chan string
 }
 
@@ -33,8 +33,8 @@ func NewClient(endpoint *url.URL) (client *Client) {
 	}
 
 	// Create channels
-	client.ReadMessage = make(chan string)
-	client.WriteMessage = make(chan string)
+	client.ReadChannel = make(chan string)
+	client.WriteChannel = make(chan string)
 	client.PingChannel = make(chan string)
 
 	client.connect()
@@ -75,8 +75,8 @@ func (this *Client) connect() {
 	communicator := NewCommunicator(this.Conn)
 	log.Debug("Starting websockets communication channel")
 	go communicator.Pinger(this.PingChannel)
-	go communicator.Reader(this.ReadMessage)
-	go communicator.Writer(this.WriteMessage)
+	go communicator.Reader(this.ReadChannel)
+	go communicator.Writer(this.WriteChannel)
 }
 
 // Send ping message

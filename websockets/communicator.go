@@ -15,7 +15,7 @@ func NewCommunicator(conn *websocket.Conn) (communicator *Communicator) {
 }
 
 // Reader function
-func (this *Communicator) Reader(c_recv chan string) {
+func (this *Communicator) Reader(readChannel chan string) {
 	log.Debug("Read communicator started")
 
 	for {
@@ -26,16 +26,16 @@ func (this *Communicator) Reader(c_recv chan string) {
 		}
 
 		// Send the received message to the channel
-		c_recv <- string(message)
+		readChannel <- string(message)
 	}
 }
 
 // Writer
-func (this *Communicator) Writer(c_send chan string) {
+func (this *Communicator) Writer(writeChannel chan string) {
 	log.Debug("Write communicator started")
 
 	for {
-		message, ok := <-c_send
+		message, ok := <-writeChannel
 		if !ok {
 			log.Debug("Sending close message")
 			this.conn.WriteMessage(websocket.CloseMessage, []byte{})
@@ -47,11 +47,11 @@ func (this *Communicator) Writer(c_send chan string) {
 }
 
 // Pinger
-func (this *Communicator) Pinger(c_ping chan string) {
+func (this *Communicator) Pinger(pingChannel chan string) {
 	log.Debug("Ping communicator started")
 
 	for {
-		message := <-c_ping
+		message := <-pingChannel
 		log.Debug("Sending ping message")
 		this.conn.WriteMessage(websocket.PingMessage, []byte(message))
 	}
